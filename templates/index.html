@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Flask</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1 id="question">Carregando pergunta...</h1>
+    <div id="options"></div>
+    <p>Use as setas para navegar e pressione espaço para escolher.</p>
+    <div id="timer">Tempo restante: <span id="time">20</span>s</div>
+
+    <script>
+        let options = [];
+        let selectedIndex = 0;
+        let respostaCorreta = "";
+        let timer, countdown;
+        const TIMER_DURATION = 20;
+
+        function fetchQuestion() {
+            fetch("/question")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        document.getElementById("question").innerText = data.erro;
+                        return;
+                    }
+
+                    document.getElementById("question").innerText = data.pergunta;
+                    let optionsDiv = document.getElementById("options");
+                    optionsDiv.innerHTML = "";
+                    options = data.opcoes;
+                    respostaCorreta = data.resposta_correta;
+
+                    options.forEach((opt, index) => {
+                        let div = document.createElement("div");
+                        div.classList.add("option");
+                        div.innerText = opt;
+                        if (index === 0) div.classList.add("selected");
+                        optionsDiv.appendChild(div);
+                    });
+
+                    selectedIndex = 0;
+                    updateSelection();
+                    startTimer();
+                });
+        }
+
+        function updateSelection() {
+            document.querySelectorAll(".option").forEach((el, index) => {
+                el.classList.toggle("selected", index === selectedIndex);
+            });
+        }
+
+        function startTimer() {
+            clearTimeout(timer);
+            clearInterval(countdown);
+            let timeLeft = TIMER_DURATION;
+            document.getElementById("time").innerText = timeLeft;
+
+            countdown = setInterval(() => {
+                timeLeft--;
+                document.getElementById("time").innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    alert("Tempo esgotado! A resposta correta era: " + respostaCorreta);
+                    fetchQuestion();
+                }
+            }, 1000);
+
+            timer = setTimeout(() => fetchQuestion(), TIMER_DURATION * 1000);
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                selectedIndex = (selectedIndex + (e.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+                updateSelection();
+            } else if (e.key === " ") {
+                clearInterval(countdown);
+                if (options[selectedIndex] === respostaCorreta) {
+                    alert("✅ Correto!");
+                } else {
+                    alert("❌ Errado! A resposta correta era: " + respostaCorreta);
+                }
+                fetchQuestion();
+            }
+        });
+
+        fetchQuestion();
+    </script>
+</body>
+</html>
