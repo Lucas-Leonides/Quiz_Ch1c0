@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Configuração do Google Sheets
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDENTIALS_FILE = "credentials.json"  # Certifique-se de ter o arquivo correto
+CREDENTIALS_FILE = "credentials.json"  
 SPREADSHEET_NAME = "Quiz_chico"
 
 def get_questions():
